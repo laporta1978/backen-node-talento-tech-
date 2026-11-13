@@ -10,7 +10,7 @@ La aplicación proporciona un sistema de autenticación mediante JSON Web Tokens
 
 ## Vista Previa (Ejemplo de Ejecución)
 
-![Consola Web - Sistema de Gestión de Productos](./public/assets/aistudio/image_36fe7304.png)
+![Consola Web - Sistema de Gestión de Productos](./public/assets/talento/image_36fe7304.png)
 
 ## Características Principales
 
