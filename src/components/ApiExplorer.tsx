@@ -116,8 +116,8 @@ const ENDPOINTS: EndpointSpec[] = [
     id: 'products-delete',
     method: 'DELETE',
     path: '/api/products/:id',
-    title: 'Eliminar producto (solo Admin)',
-    access: 'Admin',
+    title: 'Eliminar producto (sin rol admin)',
+    access: 'Autenticado',
     needsId: true,
   },
 ];

@@ -144,7 +144,7 @@ service cloud.firestore {
           )
         );
 
-      allow delete: if isVerifiedUser() && isValidId(productId) && isAdmin();
+      allow delete: if isVerifiedUser() && isValidId(productId);
     }
 
     // Users collection (PII isolated to owner or admin)

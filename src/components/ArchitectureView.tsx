@@ -41,7 +41,7 @@ const RBAC_MATRIX = [
   { method: 'GET', path: '/api/products/:id', access: 'Pública', role: 'Ninguno (Firestore public get)' },
   { method: 'POST', path: '/api/products/create', access: 'Protegida', role: 'JWT + Firebase Auth verificado' },
   { method: 'PUT', path: '/api/products/:id', access: 'Protegida', role: 'Propietario o Admin en Firestore' },
-  { method: 'DELETE', path: '/api/products/:id', access: 'Protegida', role: 'Admin exclusivamente' },
+  { method: 'DELETE', path: '/api/products/:id', access: 'Protegida', role: 'Autenticado (JWT + Firebase Auth)' },
   { method: 'POST', path: '/auth/login', access: 'Pública', role: 'Ninguno' },
   { method: 'POST', path: '/auth/firebase', access: 'Pública', role: 'Firebase ID Token verificado' },
   { method: 'POST', path: '/auth/register', access: 'Pública', role: 'Ninguno' },

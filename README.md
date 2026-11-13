@@ -8,6 +8,10 @@ Este proyecto implementa una API REST completa siguiendo las mejores prácticas 
 
 La aplicación proporciona un sistema de autenticación mediante JSON Web Tokens (JWT) y Firebase Authentication, junto con reglas de seguridad endurecidas en Cloud Firestore (`firestore.rules`) basadas en roles (`admin` / `user`).
 
+## Vista Previa (Ejemplo de Ejecución)
+
+![Consola Web - Sistema de Gestión de Productos](./public/assets/aistudio/image_36fe7304.png)
+
 ## Características Principales
 
 - **Autenticación y Autorización**: Sistema completo de login JWT (`POST /auth/login`), intercambio con Firebase Google Auth (`POST /auth/firebase`), registro, verificación y refresco de token con protección basada en roles (`admin` / `user`)
@@ -425,7 +429,7 @@ Authorization: Bearer {token}
 | GET | `/api/products/:id` | Pública | Ninguno |
 | POST | `/api/products/create` | Protegida | Autenticado |
 | PUT | `/api/products/:id` | Protegida | Autenticado |
-| DELETE | `/api/products/:id` | Protegida | Admin |
+| DELETE | `/api/products/:id` | Protegida | Autenticado |
 | POST | `/auth/login` | Pública | Ninguno |
 | POST | `/auth/register` | Pública | Ninguno |
 | GET | `/auth/verify` | Protegida | Autenticado |
