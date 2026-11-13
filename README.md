@@ -1,4 +1,4 @@
-# API REST - Sistema de Gestión de Productos - Proyecto Final Node - Talento Tech 2026
+# API REST  Proyecto Final Node - Talento Tech 2026
 
 API RESTful desarrollada con Node.js, Express y TypeScript para la gestión de productos con autenticación JWT, Firebase Auth, almacenamiento en Cloud Firestore y consola web interactiva.
 
@@ -534,9 +534,11 @@ En el archivo `package.json` están definidos los siguientes scripts:
 
 ## Licencia
 
-Este proyecto por talento tech gaston la porta  2026 
+Este proyecto por talento tech gaston la porta  2026
 
+---
 
-
-
+**Versión:** 2.1.0  
+**Última actualización:** Noviembre 2025  
+**Autor:** Gaston La Porta / Estudiante Talento Tech
 
