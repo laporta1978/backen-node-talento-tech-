@@ -19,6 +19,20 @@ export const AuthController = {
     }
   },
 
+  async firebaseLogin(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const idToken = req.body?.idToken ?? req.headers['x-firebase-token'];
+      const data = await AuthService.loginWithFirebase(idToken);
+      res.status(200).json({
+        success: true,
+        message: 'Autenticación Firebase exitosa',
+        data,
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+
   async register(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const data = await AuthService.register(req.body ?? {});
@@ -63,7 +77,7 @@ export const AuthController = {
   async me(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const userId = req.user?.userId || '';
-      const data = await AuthService.getMe(userId);
+      const data = await AuthService.getMe(userId, req.user?.email, req.user?.role);
       res.status(200).json({
         success: true,
         message: 'Usuario obtenido correctamente',

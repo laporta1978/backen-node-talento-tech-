@@ -1,20 +1,36 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { X } from 'lucide-react';
+import { auth } from '../firebase';
 import type { Product } from '../types/api';
 
 interface ProductModalProps {
   isOpen: boolean;
   editingProduct: Product | null;
   token: string | null;
+  firebaseToken: string | null;
   onClose: () => void;
-  onSaved: (product: Product, method: 'POST' | 'PUT', endpoint: string, rawResponse: unknown, status: number, durationMs: number) => void;
-  onApiError: (method: string, endpoint: string, status: number, durationMs: number, rawResponse: unknown) => void;
+  onSaved: (
+    product: Product,
+    method: 'POST' | 'PUT',
+    endpoint: string,
+    rawResponse: unknown,
+    status: number,
+    durationMs: number
+  ) => void;
+  onApiError: (
+    method: string,
+    endpoint: string,
+    status: number,
+    durationMs: number,
+    rawResponse: unknown
+  ) => void;
 }
 
 export function ProductModal({
   isOpen,
   editingProduct,
   token,
+  firebaseToken,
   onClose,
   onSaved,
   onApiError,
@@ -68,6 +84,12 @@ export function ProductModal({
       if (token) {
         headers.Authorization = `Bearer ${token}`;
       }
+      const freshFirebaseToken = auth.currentUser
+        ? await auth.currentUser.getIdToken()
+        : firebaseToken;
+      if (freshFirebaseToken) {
+        headers['X-Firebase-Token'] = freshFirebaseToken;
+      }
 
       const res = await fetch(endpoint, {
         method,
@@ -113,7 +135,7 @@ export function ProductModal({
         <div className="flex items-start justify-between gap-4 border-b border-slate-100 pb-4">
           <div>
             <h2 id="product-modal-title" className="text-lg font-semibold text-slate-900">
-              {editingProduct ? 'Editar producto' : 'Crear nuevo producto'}
+              {editingProduct ? 'Editar producto en Firestore' : 'Crear producto en Firestore'}
             </h2>
             <p className="mt-1 font-mono text-xs text-slate-500">
               {editingProduct
@@ -131,9 +153,11 @@ export function ProductModal({
           </button>
         </div>
 
-        {!token && (
+        {(!token || !firebaseToken) && (
           <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">
-            No hay sesión iniciada. Si envías el formulario, el backend responderá con HTTP 401 Unauthorized para demostrar la protección JWT.
+            {!token
+              ? 'No hay sesión JWT iniciada. El backend devolverá HTTP 401 Unauthorized.'
+              : 'No iniciaste con Google (Firebase Auth). Las reglas seguras de Firestore devolverán 401/403 si escribes sin X-Firebase-Token.'}
           </div>
         )}
 
@@ -146,6 +170,8 @@ export function ProductModal({
               id="prod-nombre"
               type="text"
               required
+              minLength={2}
+              maxLength={120}
               value={nombre}
               onChange={(e) => setNombre(e.target.value)}
               placeholder="Ej. Mouse Logitech MX Master"
@@ -196,6 +222,7 @@ export function ProductModal({
             <textarea
               id="prod-desc"
               rows={3}
+              maxLength={500}
               value={descripcion}
               onChange={(e) => setDescripcion(e.target.value)}
               placeholder="Descripción técnica o comercial del producto"

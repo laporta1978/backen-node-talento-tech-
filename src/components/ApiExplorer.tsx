@@ -124,6 +124,7 @@ const ENDPOINTS: EndpointSpec[] = [
 
 interface ApiExplorerProps {
   token: string | null;
+  firebaseToken: string | null;
   products: Product[];
   onRefreshProducts: () => void;
   onTokenReceived: (newToken: string, user?: { id: string; email: string; nombre: string; role: 'admin' | 'user' }) => void;
@@ -138,6 +139,7 @@ const METHOD_COLOR: Record<EndpointSpec['method'], string> = {
 
 export function ApiExplorer({
   token,
+  firebaseToken,
   products,
   onRefreshProducts,
   onTokenReceived,
@@ -186,11 +188,14 @@ export function ApiExplorer({
     if (includeAuth && token) {
       parts.push(`-H "Authorization: Bearer ${token.slice(0, 24)}..."`);
     }
+    if (includeAuth && firebaseToken) {
+      parts.push(`-H "X-Firebase-Token: ${firebaseToken.slice(0, 20)}..."`);
+    }
     if (selected.defaultBody !== undefined && bodyText.trim()) {
       parts.push(`-d '${bodyText.replace(/\s+/g, ' ').trim()}'`);
     }
     return parts.join(' \\\n  ');
-  }, [selected, resolvedPath, includeAuth, token, bodyText]);
+  }, [selected, resolvedPath, includeAuth, token, firebaseToken, bodyText]);
 
   async function executeRequest() {
     setLoading(true);
@@ -200,6 +205,9 @@ export function ApiExplorer({
       const headers: Record<string, string> = {};
       if (includeAuth && token) {
         headers.Authorization = `Bearer ${token}`;
+      }
+      if (includeAuth && firebaseToken) {
+        headers['X-Firebase-Token'] = firebaseToken;
       }
 
       const init: RequestInit = {

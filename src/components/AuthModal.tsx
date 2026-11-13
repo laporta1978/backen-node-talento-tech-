@@ -1,11 +1,20 @@
 import { useState, type FormEvent } from 'react';
 import { X } from 'lucide-react';
+import { signInWithGoogle } from '../firebase';
 import type { AuthUser } from '../types/api';
 
 interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onAuthenticated: (token: string, user: AuthUser, rawResponse: unknown, status: number, durationMs: number, endpoint: string) => void;
+  onAuthenticated: (
+    token: string,
+    user: AuthUser,
+    rawResponse: unknown,
+    status: number,
+    durationMs: number,
+    endpoint: string,
+    firebaseToken?: string
+  ) => void;
 }
 
 export function AuthModal({ isOpen, onClose, onAuthenticated }: AuthModalProps) {
@@ -19,7 +28,54 @@ export function AuthModal({ isOpen, onClose, onAuthenticated }: AuthModalProps) 
 
   if (!isOpen) return null;
 
-  async function submitAuth(targetMode: 'login' | 'register', customEmail?: string, customPassword?: string) {
+  async function handleGoogleLogin() {
+    setError(null);
+    setDetails([]);
+    setLoading(true);
+    const started = performance.now();
+
+    try {
+      const { idToken } = await signInWithGoogle();
+      const res = await fetch('/auth/firebase', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ idToken }),
+      });
+
+      const durationMs = Math.round(performance.now() - started);
+      const json = await res.json();
+
+      if (!res.ok || !json.success) {
+        setError(json.message || 'No se pudo validar la sesión de Firebase');
+        return;
+      }
+
+      onAuthenticated(
+        json.data.token,
+        json.data.user,
+        json,
+        res.status,
+        durationMs,
+        '/auth/firebase',
+        idToken
+      );
+      onClose();
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'No se pudo completar el inicio de sesión con Google'
+      );
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function submitAuth(
+    targetMode: 'login' | 'register',
+    customEmail?: string,
+    customPassword?: string
+  ) {
     setError(null);
     setDetails([]);
     setLoading(true);
@@ -49,7 +105,14 @@ export function AuthModal({ isOpen, onClose, onAuthenticated }: AuthModalProps) 
         return;
       }
 
-      onAuthenticated(json.data.token, json.data.user, json, res.status, durationMs, endpoint);
+      onAuthenticated(
+        json.data.token,
+        json.data.user,
+        json,
+        res.status,
+        durationMs,
+        endpoint
+      );
       onClose();
     } catch {
       setError('Error de conexión con el servidor Express');
@@ -74,12 +137,10 @@ export function AuthModal({ isOpen, onClose, onAuthenticated }: AuthModalProps) 
         <div className="flex items-start justify-between gap-4 border-b border-slate-100 pb-4">
           <div>
             <h2 id="auth-modal-title" className="text-lg font-semibold text-slate-900">
-              {mode === 'login' ? 'Iniciar sesión JWT' : 'Registrar nueva cuenta'}
+              {mode === 'login' ? 'Autenticación Firebase y JWT' : 'Registrar cuenta JWT'}
             </h2>
             <p className="mt-1 text-sm text-slate-500">
-              {mode === 'login'
-                ? 'Obtiene un token Bearer con vigencia de 24 horas.'
-                : 'Crea una cuenta con rol estándar para gestionar productos.'}
+              Inicia con Google para escribir en Cloud Firestore o prueba el login JWT clásico.
             </p>
           </div>
           <button
@@ -92,7 +153,27 @@ export function AuthModal({ isOpen, onClose, onAuthenticated }: AuthModalProps) 
           </button>
         </div>
 
-        <div className="mt-4 flex items-center gap-1 rounded-lg bg-slate-100 p-1">
+        <div className="mt-4">
+          <button
+            type="button"
+            disabled={loading}
+            onClick={() => void handleGoogleLogin()}
+            className="flex w-full items-center justify-center gap-2.5 rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-slate-800 disabled:opacity-50"
+          >
+            <span>Continuar con Google (Firebase Auth)</span>
+          </button>
+          <p className="mt-1.5 text-center text-xs text-slate-500">
+            Habilita escrituras reales en Cloud Firestore bajo reglas de seguridad verificadas.
+          </p>
+        </div>
+
+        <div className="my-4 flex items-center gap-3">
+          <div className="h-px flex-1 bg-slate-200" />
+          <span className="text-xs text-slate-400">o credenciales JWT locales</span>
+          <div className="h-px flex-1 bg-slate-200" />
+        </div>
+
+        <div className="flex items-center gap-1 rounded-lg bg-slate-100 p-1">
           <button
             type="button"
             onClick={() => {
@@ -123,7 +204,7 @@ export function AuthModal({ isOpen, onClose, onAuthenticated }: AuthModalProps) 
 
         {mode === 'login' && (
           <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-3">
-            <div className="text-xs font-medium text-slate-700">Accesos de prueba precargados</div>
+            <div className="text-xs font-medium text-slate-700">Pruebas rápidas JWT</div>
             <div className="mt-2 flex flex-wrap gap-2">
               <button
                 type="button"
@@ -135,7 +216,7 @@ export function AuthModal({ isOpen, onClose, onAuthenticated }: AuthModalProps) 
                 }}
                 className="whitespace-nowrap rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-800 transition-colors hover:border-slate-300 hover:bg-slate-100"
               >
-                Admin (admin@talentotech.com)
+                Admin JWT
               </button>
               <button
                 type="button"
@@ -147,7 +228,7 @@ export function AuthModal({ isOpen, onClose, onAuthenticated }: AuthModalProps) 
                 }}
                 className="whitespace-nowrap rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-800 transition-colors hover:border-slate-300 hover:bg-slate-100"
               >
-                Usuario (usuario@talentotech.com)
+                Usuario JWT
               </button>
             </div>
           </div>
@@ -225,9 +306,9 @@ export function AuthModal({ isOpen, onClose, onAuthenticated }: AuthModalProps) 
             <button
               type="submit"
               disabled={loading}
-              className="whitespace-nowrap rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-slate-800 disabled:opacity-50"
+              className="whitespace-nowrap rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-900 transition-colors hover:bg-slate-50 disabled:opacity-50"
             >
-              {loading ? 'Procesando...' : mode === 'login' ? 'Obtener token JWT' : 'Registrar y entrar'}
+              {loading ? 'Procesando...' : mode === 'login' ? 'Entrar con email' : 'Registrar y entrar'}
             </button>
           </div>
         </form>

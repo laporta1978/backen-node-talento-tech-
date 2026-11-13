@@ -1,4 +1,5 @@
 import path from 'node:path';
+import bodyParser from 'body-parser';
 import cors from 'cors';
 import express from 'express';
 import { initDatabase } from './config/database.config.ts';
@@ -13,8 +14,8 @@ async function startServer() {
   const app = express();
 
   app.use(cors());
-  app.use(express.json());
-  app.use(express.urlencoded({ extended: true }));
+  app.use(bodyParser.json());
+  app.use(bodyParser.urlencoded({ extended: true }));
 
   app.get('/api/health', (_req, res) => {
     res.status(200).json({
@@ -42,6 +43,17 @@ async function startServer() {
       success: false,
       message: 'Endpoint de autenticación no encontrado',
     });
+  });
+
+  app.use((req, res, next) => {
+    if (req.method !== 'GET') {
+      res.status(404).json({
+        success: false,
+        message: `Ruta no encontrada: ${req.method} ${req.originalUrl}`,
+      });
+      return;
+    }
+    next();
   });
 
   if (envConfig.nodeEnv !== 'production') {

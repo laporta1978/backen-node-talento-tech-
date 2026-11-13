@@ -1,0 +1,211 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global safety net: deny everything by default
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Global helpers
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerifiedUser() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isBootstrappedAdmin() {
+      return isVerifiedUser() && request.auth.token.email == 'damianmataderos78@gmail.com';
+    }
+
+    function isAdmin() {
+      return isBootstrappedAdmin() ||
+        (isVerifiedUser() && exists(/databases/$(database)/documents/admins/$(request.auth.uid)));
+    }
+
+    // Entity validation blueprints
+    function isValidProduct(data) {
+      return data.keys().hasAll([
+          'nombre',
+          'precio',
+          'stock',
+          'descripcion',
+          'activo',
+          'creadoPor',
+          'creadoPorId',
+          'fechaCreacion',
+          'fechaActualizacion'
+        ]) &&
+        data.keys().hasOnly([
+          'nombre',
+          'precio',
+          'stock',
+          'descripcion',
+          'activo',
+          'creadoPor',
+          'creadoPorId',
+          'actualizadoPor',
+          'fechaCreacion',
+          'fechaActualizacion'
+        ]) &&
+        data.nombre is string && data.nombre.size() >= 2 && data.nombre.size() <= 120 &&
+        (data.precio is int || data.precio is float) && data.precio >= 0 &&
+        data.stock is int && data.stock >= 0 &&
+        data.descripcion is string && data.descripcion.size() <= 500 &&
+        data.activo is bool &&
+        data.creadoPor is string && data.creadoPor.size() >= 1 && data.creadoPor.size() <= 120 &&
+        isValidId(data.creadoPorId) &&
+        (!('actualizadoPor' in data) || (data.actualizadoPor is string && data.actualizadoPor.size() >= 1 && data.actualizadoPor.size() <= 120)) &&
+        data.fechaCreacion is timestamp &&
+        data.fechaActualizacion is timestamp;
+    }
+
+    function isValidUser(data) {
+      return data.keys().hasAll([
+          'uid',
+          'email',
+          'nombre',
+          'role',
+          'activo',
+          'fechaCreacion',
+          'fechaActualizacion'
+        ]) &&
+        data.keys().hasOnly([
+          'uid',
+          'email',
+          'nombre',
+          'role',
+          'activo',
+          'fechaCreacion',
+          'fechaActualizacion'
+        ]) &&
+        isValidId(data.uid) &&
+        data.email is string && data.email.size() >= 3 && data.email.size() <= 160 &&
+        data.nombre is string && data.nombre.size() >= 2 && data.nombre.size() <= 120 &&
+        data.role in ['admin', 'user'] &&
+        data.activo is bool &&
+        data.fechaCreacion is timestamp &&
+        data.fechaActualizacion is timestamp;
+    }
+
+    function isValidAdmin(data) {
+      return data.keys().hasAll(['uid', 'email', 'fechaCreacion']) &&
+        data.keys().hasOnly(['uid', 'email', 'fechaCreacion']) &&
+        isValidId(data.uid) &&
+        data.email is string && data.email.size() >= 3 && data.email.size() <= 160 &&
+        data.fechaCreacion is timestamp;
+    }
+
+    // Products collection
+    match /products/{productId} {
+      allow get: if isValidId(productId);
+      allow list: if true;
+
+      allow create: if isVerifiedUser() &&
+        isValidId(productId) &&
+        isValidProduct(incoming()) &&
+        incoming().creadoPorId == request.auth.uid &&
+        incoming().fechaCreacion == request.time &&
+        incoming().fechaActualizacion == request.time;
+
+      allow update: if isVerifiedUser() &&
+        isValidId(productId) &&
+        isValidProduct(incoming()) &&
+        incoming().creadoPorId == existing().creadoPorId &&
+        incoming().fechaCreacion == existing().fechaCreacion &&
+        incoming().fechaActualizacion == request.time &&
+        (
+          isAdmin() ||
+          (
+            existing().creadoPorId == request.auth.uid &&
+            incoming().diff(existing()).affectedKeys().hasOnly([
+              'nombre',
+              'precio',
+              'stock',
+              'descripcion',
+              'activo',
+              'actualizadoPor',
+              'fechaActualizacion'
+            ])
+          )
+        );
+
+      allow delete: if isVerifiedUser() && isValidId(productId) && isAdmin();
+    }
+
+    // Users collection (PII isolated to owner or admin)
+    match /users/{userId} {
+      allow get: if isVerifiedUser() &&
+        isValidId(userId) &&
+        (request.auth.uid == userId || isAdmin());
+
+      allow list: if isVerifiedUser() &&
+        (isBootstrappedAdmin() || resource.data.uid == request.auth.uid);
+
+      allow create: if isVerifiedUser() &&
+        isValidId(userId) &&
+        request.auth.uid == userId &&
+        isValidUser(incoming()) &&
+        incoming().uid == request.auth.uid &&
+        incoming().role == 'user' &&
+        incoming().fechaCreacion == request.time &&
+        incoming().fechaActualizacion == request.time;
+
+      allow update: if isVerifiedUser() &&
+        isValidId(userId) &&
+        isValidUser(incoming()) &&
+        incoming().uid == existing().uid &&
+        incoming().fechaCreacion == existing().fechaCreacion &&
+        incoming().fechaActualizacion == request.time &&
+        (
+          isAdmin() ||
+          (
+            request.auth.uid == userId &&
+            incoming().role == existing().role &&
+            incoming().diff(existing()).affectedKeys().hasOnly(['nombre', 'fechaActualizacion'])
+          )
+        );
+
+      allow delete: if isVerifiedUser() && isValidId(userId) && isAdmin();
+    }
+
+    // Admins collection
+    match /admins/{adminId} {
+      allow get: if isVerifiedUser() &&
+        isValidId(adminId) &&
+        (request.auth.uid == adminId || isAdmin());
+
+      allow list: if isBootstrappedAdmin();
+
+      allow create: if isVerifiedUser() &&
+        isValidId(adminId) &&
+        isValidAdmin(incoming()) &&
+        isAdmin() &&
+        incoming().fechaCreacion == request.time;
+
+      allow update: if isVerifiedUser() &&
+        isValidId(adminId) &&
+        isValidAdmin(incoming()) &&
+        isAdmin() &&
+        incoming().uid == existing().uid &&
+        incoming().fechaCreacion == existing().fechaCreacion &&
+        incoming().diff(existing()).affectedKeys().hasOnly(['email']);
+
+      allow delete: if isVerifiedUser() && isValidId(adminId) && isAdmin();
+    }
+  }
+}

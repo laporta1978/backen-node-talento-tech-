@@ -1,0 +1,172 @@
+{
+  "entities": {
+    "Product": {
+      "title": "Product",
+      "description": "Producto del catálogo administrado por la API REST y almacenado en Cloud Firestore.",
+      "type": "object",
+      "properties": {
+        "nombre": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 120,
+          "description": "Nombre comercial del producto."
+        },
+        "precio": {
+          "type": "number",
+          "description": "Precio unitario mayor o igual a 0."
+        },
+        "stock": {
+          "type": "integer",
+          "description": "Cantidad de unidades disponibles en inventario (>= 0)."
+        },
+        "descripcion": {
+          "type": "string",
+          "maxLength": 500,
+          "description": "Descripción técnica o comercial del producto."
+        },
+        "activo": {
+          "type": "boolean",
+          "description": "Indica si el producto está activo en el catálogo."
+        },
+        "creadoPor": {
+          "type": "string",
+          "maxLength": 120,
+          "description": "Nombre visible del usuario que creó el producto."
+        },
+        "creadoPorId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "description": "UID de Firebase Auth del creador del producto."
+        },
+        "actualizadoPor": {
+          "type": "string",
+          "maxLength": 120,
+          "description": "Nombre visible del último usuario que actualizó el producto."
+        },
+        "fechaCreacion": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Marca temporal del servidor al crear el documento."
+        },
+        "fechaActualizacion": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Marca temporal del servidor de la última actualización."
+        }
+      },
+      "required": [
+        "nombre",
+        "precio",
+        "stock",
+        "descripcion",
+        "activo",
+        "creadoPor",
+        "creadoPorId",
+        "fechaCreacion",
+        "fechaActualizacion"
+      ]
+    },
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Perfil privado del usuario autenticado con información personal aislada.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "description": "UID de Firebase Auth."
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "maxLength": 160,
+          "description": "Correo electrónico verificado del usuario."
+        },
+        "nombre": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 120,
+          "description": "Nombre completo del usuario."
+        },
+        "role": {
+          "type": "string",
+          "enum": ["admin", "user"],
+          "description": "Rol asignado en la plataforma."
+        },
+        "activo": {
+          "type": "boolean",
+          "description": "Estado de habilitación de la cuenta."
+        },
+        "fechaCreacion": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Fecha de creación del perfil."
+        },
+        "fechaActualizacion": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Fecha de última actualización del perfil."
+        }
+      },
+      "required": [
+        "uid",
+        "email",
+        "nombre",
+        "role",
+        "activo",
+        "fechaCreacion",
+        "fechaActualizacion"
+      ]
+    },
+    "AdminMarker": {
+      "title": "AdminMarker",
+      "description": "Documento marcador de rol administrador verificado por UID.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "description": "UID del administrador."
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "maxLength": 160,
+          "description": "Correo del administrador."
+        },
+        "fechaCreacion": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Fecha de asignación del rol."
+        }
+      },
+      "required": ["uid", "email", "fechaCreacion"]
+    }
+  },
+  "firestore": {
+    "/products/{productId}": {
+      "schema": {
+        "$ref": "#/entities/Product"
+      },
+      "description": "Colección pública de lectura para el catálogo de productos; escritura restringida a usuarios verificados y eliminación exclusiva para administradores."
+    },
+    "/users/{userId}": {
+      "schema": {
+        "$ref": "#/entities/UserProfile"
+      },
+      "description": "Colección de perfiles privados (PII) accesible únicamente por su propietario o un administrador."
+    },
+    "/admins/{adminId}": {
+      "schema": {
+        "$ref": "#/entities/AdminMarker"
+      },
+      "description": "Colección confiable para verificación de administradores."
+    }
+  }
+}

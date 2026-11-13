@@ -146,7 +146,7 @@ export const ProductsService = {
   },
 
   async getProductById(id: string) {
-    if (!id || !id.trim()) {
+    if (!id || !id.trim() || !/^[a-zA-Z0-9_\-]+$/.test(id.trim())) {
       throw new AppError('ID de producto inválido', 400);
     }
     const product = await ProductModel.findById(id.trim());
@@ -156,26 +156,43 @@ export const ProductsService = {
     return product;
   },
 
-  async createProduct(payload: ProductPayload, user: AuthTokenPayload) {
+  async createProduct(
+    payload: ProductPayload,
+    user: AuthTokenPayload,
+    firebaseIdToken?: string
+  ) {
     const validated = validateCreatePayload(payload);
-    return ProductModel.create({
-      ...validated,
-      creadoPor: user.email,
-      creadoPorId: user.userId,
-    });
+    const displayCreator = user.email.split('@')[0].slice(0, 120) || 'Operador';
+    return ProductModel.create(
+      {
+        ...validated,
+        creadoPor: displayCreator,
+        creadoPorId: user.userId,
+      },
+      firebaseIdToken
+    );
   },
 
-  async updateProduct(id: string, payload: ProductPayload, user: AuthTokenPayload) {
-    const existing = await ProductModel.findById(id);
-    if (!existing) {
-      throw new AppError('Producto no encontrado', 404);
+  async updateProduct(
+    id: string,
+    payload: ProductPayload,
+    user: AuthTokenPayload,
+    firebaseIdToken?: string
+  ) {
+    if (!id || !id.trim() || !/^[a-zA-Z0-9_\-]+$/.test(id.trim())) {
+      throw new AppError('ID de producto inválido', 400);
     }
 
     const validated = validateUpdatePayload(payload);
-    const updated = await ProductModel.update(id, {
-      ...validated,
-      actualizadoPor: user.email,
-    });
+    const displayUpdater = user.email.split('@')[0].slice(0, 120) || 'Operador';
+    const updated = await ProductModel.update(
+      id.trim(),
+      {
+        ...validated,
+        actualizadoPor: displayUpdater,
+      },
+      firebaseIdToken
+    );
 
     if (!updated) {
       throw new AppError('Producto no encontrado', 404);
@@ -184,8 +201,16 @@ export const ProductsService = {
     return updated;
   },
 
-  async deleteProduct(id: string, user: AuthTokenPayload) {
-    const deleted = await ProductModel.remove(id);
+  async deleteProduct(
+    id: string,
+    user: AuthTokenPayload,
+    firebaseIdToken?: string
+  ) {
+    if (!id || !id.trim() || !/^[a-zA-Z0-9_\-]+$/.test(id.trim())) {
+      throw new AppError('ID de producto inválido', 400);
+    }
+
+    const deleted = await ProductModel.remove(id.trim(), firebaseIdToken);
     if (!deleted) {
       throw new AppError('Producto no encontrado', 404);
     }

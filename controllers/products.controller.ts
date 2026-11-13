@@ -2,6 +2,14 @@ import type { NextFunction, Request, Response } from 'express';
 import { AppError, type AuthenticatedRequest } from '../middlewares/auth.middleware.ts';
 import { ProductsService } from '../services/products.service.ts';
 
+function extractFirebaseToken(req: Request): string | undefined {
+  const header = req.headers['x-firebase-token'];
+  if (typeof header === 'string' && header.trim()) {
+    return header.trim();
+  }
+  return undefined;
+}
+
 export const ProductsController = {
   async getAll(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
@@ -40,7 +48,8 @@ export const ProductsController = {
       if (!req.user) {
         throw new AppError('Autenticación requerida', 401);
       }
-      const data = await ProductsService.createProduct(req.body ?? {}, req.user);
+      const firebaseToken = extractFirebaseToken(req);
+      const data = await ProductsService.createProduct(req.body ?? {}, req.user, firebaseToken);
 
       res.status(201).json({
         success: true,
@@ -58,7 +67,8 @@ export const ProductsController = {
         throw new AppError('Autenticación requerida', 401);
       }
       const id = String(req.params.id ?? '');
-      const data = await ProductsService.updateProduct(id, req.body ?? {}, req.user);
+      const firebaseToken = extractFirebaseToken(req);
+      const data = await ProductsService.updateProduct(id, req.body ?? {}, req.user, firebaseToken);
 
       res.status(200).json({
         success: true,
@@ -76,7 +86,8 @@ export const ProductsController = {
         throw new AppError('Autenticación requerida', 401);
       }
       const id = String(req.params.id ?? '');
-      const result = await ProductsService.deleteProduct(id, req.user);
+      const firebaseToken = extractFirebaseToken(req);
+      const result = await ProductsService.deleteProduct(id, req.user, firebaseToken);
 
       res.status(200).json({
         success: true,

@@ -1,6 +1,7 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { envConfig } from '../config/env.config.ts';
+import { firebaseConfig } from '../config/firebase.config.ts';
 import { AppError, type AuthTokenPayload } from '../middlewares/auth.middleware.ts';
 import { UserModel } from '../models/user.model.ts';
 
@@ -72,6 +73,65 @@ export const AuthService = {
     };
   },
 
+  async loginWithFirebase(idToken: unknown) {
+    if (typeof idToken !== 'string' || !idToken.trim()) {
+      throw new AppError('El token de Firebase (idToken) es obligatorio', 400);
+    }
+
+    const lookupRes = await fetch(
+      `https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${firebaseConfig.apiKey}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ idToken: idToken.trim() }),
+      }
+    );
+
+    if (!lookupRes.ok) {
+      throw new AppError('Token de Firebase inválido o expirado', 401);
+    }
+
+    const lookupData = (await lookupRes.json()) as {
+      users?: Array<{
+        localId: string;
+        email?: string;
+        emailVerified?: boolean;
+        displayName?: string;
+      }>;
+    };
+
+    const fbUser = lookupData.users?.[0];
+    if (!fbUser || !fbUser.email) {
+      throw new AppError('No se pudo verificar el usuario de Firebase', 401);
+    }
+
+    if (!fbUser.emailVerified) {
+      throw new AppError('El correo de Firebase debe estar verificado', 403);
+    }
+
+    const normalizedEmail = fbUser.email.toLowerCase();
+    const role = normalizedEmail === 'damianmataderos78@gmail.com' ? 'admin' : 'user';
+    const nombre = fbUser.displayName || normalizedEmail.split('@')[0];
+
+    const token = signAccessToken({
+      userId: fbUser.localId,
+      email: normalizedEmail,
+      role,
+    });
+
+    return {
+      token,
+      type: 'Bearer',
+      expiresIn: envConfig.jwtExpiresIn,
+      user: {
+        id: fbUser.localId,
+        email: normalizedEmail,
+        nombre,
+        role,
+      },
+    };
+  },
+
   async register(payload: RegisterPayload) {
     const errors: string[] = [];
 
@@ -138,14 +198,12 @@ export const AuthService = {
     }
 
     const user = await UserModel.findById(decoded.userId);
-    if (!user || !user.activo) {
-      throw new AppError('Usuario no encontrado o inactivo', 401);
-    }
+    const role = user?.role ?? decoded.role;
 
     const freshToken = signAccessToken({
-      userId: user.id,
-      email: user.email,
-      role: user.role,
+      userId: decoded.userId,
+      email: decoded.email,
+      role,
     });
 
     return {
@@ -155,9 +213,18 @@ export const AuthService = {
     };
   },
 
-  async getMe(userId: string) {
+  async getMe(userId: string, fallbackEmail?: string, fallbackRole?: 'admin' | 'user') {
     const user = await UserModel.findById(userId);
     if (!user) {
+      if (fallbackEmail) {
+        return {
+          id: userId,
+          email: fallbackEmail,
+          nombre: fallbackEmail.split('@')[0],
+          role: fallbackRole || 'user',
+          activo: true,
+        };
+      }
       throw new AppError('Usuario no encontrado', 404);
     }
 
