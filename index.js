@@ -1,49 +1,13 @@
 import path from 'node:path';
-import bodyParser from 'body-parser';
-import cors from 'cors';
 import express from 'express';
-import { initDatabase } from './config/database.config.js';
+import { createApiApp, ensureDatabaseReady } from './app.js';
 import { envConfig } from './config/env.config.js';
 import { errorHandler } from './middlewares/auth.middleware.js';
-import authRoutes from './routes/auth.routes.js';
-import productsRoutes from './routes/products.routes.js';
 
 async function startServer() {
-  await initDatabase();
+  await ensureDatabaseReady();
 
-  const app = express();
-
-  app.use(cors());
-  app.use(bodyParser.json());
-  app.use(bodyParser.urlencoded({ extended: true }));
-
-  app.get('/api/health', (_req, res) => {
-    res.status(200).json({
-      success: true,
-      message: 'API REST operativa',
-      data: {
-        environment: envConfig.nodeEnv,
-        timestamp: new Date().toISOString(),
-      },
-    });
-  });
-
-  app.use('/auth', authRoutes);
-  app.use('/api/products', productsRoutes);
-
-  app.use('/api', (_req, res) => {
-    res.status(404).json({
-      success: false,
-      message: 'Endpoint de API no encontrado',
-    });
-  });
-
-  app.use('/auth', (_req, res) => {
-    res.status(404).json({
-      success: false,
-      message: 'Endpoint de autenticación no encontrado',
-    });
-  });
+  const app = createApiApp({ mountNotFoundFallback: false });
 
   app.use((req, res, next) => {
     if (req.method !== 'GET') {

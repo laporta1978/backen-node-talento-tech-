@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs';
 import { envConfig } from './env.config.js';
 
 let writeQueue = Promise.resolve();
+let memoryFallbackDb = null;
 
 async function createInitialSeed() {
   const now = new Date().toISOString();
@@ -37,18 +38,27 @@ async function createInitialSeed() {
 }
 
 export async function initDatabase() {
-  await fs.mkdir(envConfig.dataDir, { recursive: true });
   try {
-    await fs.access(envConfig.dbFilePath);
+    await fs.mkdir(envConfig.dataDir, { recursive: true });
+    try {
+      await fs.access(envConfig.dbFilePath);
+    } catch {
+      const seed = await createInitialSeed();
+      await fs.writeFile(envConfig.dbFilePath, JSON.stringify(seed, null, 2), 'utf-8');
+    }
   } catch {
-    const seed = await createInitialSeed();
-    await fs.writeFile(envConfig.dbFilePath, JSON.stringify(seed, null, 2), 'utf-8');
+    if (!memoryFallbackDb) {
+      memoryFallbackDb = await createInitialSeed();
+    }
   }
 }
 
 export async function readDatabase() {
   await writeQueue;
   await initDatabase();
+  if (memoryFallbackDb) {
+    return memoryFallbackDb;
+  }
   const raw = await fs.readFile(envConfig.dbFilePath, 'utf-8');
   return JSON.parse(raw);
 }
@@ -58,6 +68,11 @@ export async function writeDatabase(updater) {
 
   const task = writeQueue.then(async () => {
     await initDatabase();
+    if (memoryFallbackDb) {
+      memoryFallbackDb = await updater(memoryFallbackDb);
+      resultSchema = memoryFallbackDb;
+      return;
+    }
     const raw = await fs.readFile(envConfig.dbFilePath, 'utf-8');
     const current = JSON.parse(raw);
     const updated = await updater(current);

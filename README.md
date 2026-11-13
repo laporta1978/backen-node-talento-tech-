@@ -114,12 +114,17 @@ proyecto-node-final/
 │   ├── firebase.ts                 # SDK cliente Firebase, Google Auth y onSnapshot
 │   └── App.tsx
 │
+├── 📂 api/                         # Entrada Serverless para Vercel
+│   └── index.js                    # Handler Serverless que expone la API Express
+│
 ├── 📄 firebase-applet-config.json  # Configuración del proyecto Firebase aprovisionado
 ├── 📄 firebase-blueprint.json      # Blueprint de entidades y colecciones Firestore
 ├── 📄 firestore.rules              # Reglas de seguridad desplegadas en Firestore
 ├── 📄 .env.example                 # Plantilla de variables de entorno
 ├── 📄 .gitignore                   # Archivos ignorados por Git
-├── 📄 index.js                     # Punto de entrada del servidor Express
+├── 📄 app.js                       # Configuración compartida de Express y rutas
+├── 📄 index.js                     # Punto de entrada del servidor local
+├── 📄 vercel.json                  # Configuración de build y rewrites para Vercel
 ├── 📄 package.json                 # Dependencias y scripts
 └── 📄 README.md                    # Documentación del proyecto
 ```
@@ -528,6 +533,17 @@ En el archivo `package.json` están definidos los siguientes scripts:
 - `npm run build`: Compila el frontend de consola en `dist/`
 - `npm run start`: Ejecuta `node index.js` en modo producción
 - `npm run lint`: Verifica tipos del frontend con `tsc --noEmit`
+
+## Despliegue en Vercel
+
+El proyecto incluye `vercel.json` y `api/index.js` para desplegar la API Express como Serverless Function y el frontend compilado en `dist/`:
+
+1. Sube el repositorio a GitHub e impórtalo en Vercel.
+2. En **Settings → Environment Variables**, agrega:
+   - `NODE_ENV` = `production`
+   - `JWT_SECRET` = clave aleatoria de al menos 32 caracteres
+3. Despliega el proyecto (`vercel.json` ejecuta `npm run build` y publica `dist/` + `/api/index.js`).
+4. En **Firebase Console → Authentication → Settings → Authorized domains**, agrega tu dominio `.vercel.app` para habilitar el inicio de sesión con Google en producción.
 
 ## Seguridad
 

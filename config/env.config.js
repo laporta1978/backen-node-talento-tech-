@@ -1,16 +1,26 @@
 import crypto from 'node:crypto';
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import dotenv from 'dotenv';
 
 dotenv.config();
 
-const dataDir = path.resolve(process.cwd(), 'data');
+const isVercel = Boolean(process.env.VERCEL);
+const dataDir = isVercel
+  ? path.join(os.tmpdir(), 'talento-tech-data')
+  : path.resolve(process.cwd(), 'data');
 const secretFilePath = path.join(dataDir, '.jwt_secret');
 
 function loadOrCreateJwtSecret() {
   if (process.env.JWT_SECRET && process.env.JWT_SECRET !== 'MY_JWT_SECRET') {
     return process.env.JWT_SECRET;
+  }
+
+  if (isVercel) {
+    console.warn(
+      'Advertencia: JWT_SECRET no está definida en Vercel. Configura JWT_SECRET en Environment Variables para mantener sesiones estables.'
+    );
   }
 
   try {
@@ -30,6 +40,7 @@ function loadOrCreateJwtSecret() {
 }
 
 export const envConfig = {
+  isVercel,
   port: Number(process.env.PORT) || 3000,
   nodeEnv: process.env.NODE_ENV || 'development',
   jwtSecret: loadOrCreateJwtSecret(),

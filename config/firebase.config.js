@@ -3,8 +3,11 @@ import path from 'node:path';
 import { initializeApp, getApps } from 'firebase/app';
 import { getFirestore } from 'firebase/firestore';
 
-const configPath = path.resolve(process.cwd(), 'firebase-applet-config.json');
-const rawConfig = fs.readFileSync(configPath, 'utf-8');
+const configUrl = new URL('../firebase-applet-config.json', import.meta.url);
+const fallbackPath = path.resolve(process.cwd(), 'firebase-applet-config.json');
+const rawConfig = fs.existsSync(configUrl)
+  ? fs.readFileSync(configUrl, 'utf-8')
+  : fs.readFileSync(fallbackPath, 'utf-8');
 
 export const firebaseConfig = JSON.parse(rawConfig);
 
