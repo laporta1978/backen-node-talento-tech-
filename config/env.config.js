@@ -8,7 +8,7 @@ dotenv.config();
 const dataDir = path.resolve(process.cwd(), 'data');
 const secretFilePath = path.join(dataDir, '.jwt_secret');
 
-function loadOrCreateJwtSecret(): string {
+function loadOrCreateJwtSecret() {
   if (process.env.JWT_SECRET && process.env.JWT_SECRET !== 'MY_JWT_SECRET') {
     return process.env.JWT_SECRET;
   }
@@ -33,7 +33,7 @@ export const envConfig = {
   port: Number(process.env.PORT) || 3000,
   nodeEnv: process.env.NODE_ENV || 'development',
   jwtSecret: loadOrCreateJwtSecret(),
-  jwtExpiresIn: '24h' as const,
+  jwtExpiresIn: '24h',
   dataDir,
   dbFilePath: path.join(dataDir, 'db.json'),
 };

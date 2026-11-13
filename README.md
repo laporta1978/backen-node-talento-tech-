@@ -1,6 +1,6 @@
 # API REST  Proyecto Final Node - Talento Tech 2026
 
-API RESTful desarrollada con Node.js, Express y TypeScript para la gestión de productos con autenticación JWT, Firebase Auth, almacenamiento en Cloud Firestore y consola web interactiva.
+API RESTful desarrollada con Node.js, Express y JavaScript (ES Modules) para la gestión de productos con autenticación JWT, Firebase Auth, almacenamiento en Cloud Firestore y consola web interactiva.
 
 ## Descripción
 
@@ -86,28 +86,28 @@ El servidor estará disponible en `http://localhost:3000`
 proyecto-node-final/
 │
 ├── 📂 config/                      # Configuraciones
-│   ├── firebase.config.ts          # Conexión con Firebase y Cloud Firestore
-│   ├── database.config.ts          # Almacenamiento auxiliar para usuarios JWT locales
-│   └── env.config.ts               # Variables de entorno y configuración JWT
+│   ├── firebase.config.js          # Conexión con Firebase y Cloud Firestore
+│   ├── database.config.js          # Almacenamiento auxiliar para usuarios JWT locales
+│   └── env.config.js               # Variables de entorno y configuración JWT
 │
 ├── 📂 controllers/                 # Controladores (Handlers)
-│   ├── auth.controller.ts          # Login JWT, Firebase Auth, registro, verificación
-│   └── products.controller.ts      # CRUD de productos
+│   ├── auth.controller.js          # Login JWT, Firebase Auth, registro, verificación
+│   └── products.controller.js      # CRUD de productos
 │
 ├── 📂 middlewares/                 # Middlewares personalizados
-│   └── auth.middleware.ts          # Autenticación JWT, roles y manejo de errores
+│   └── auth.middleware.js          # Autenticación JWT, roles y manejo de errores
 │
 ├── 📂 models/                      # Modelos (Data Access)
-│   ├── product.model.ts            # Interacción con colección products en Firestore
-│   └── user.model.ts               # Interacción con usuarios
+│   ├── product.model.js            # Interacción con colección products en Firestore
+│   └── user.model.js               # Interacción con usuarios
 │
 ├── 📂 routes/                      # Definición de rutas
-│   ├── auth.routes.ts              # Rutas de autenticación (/auth)
-│   └── products.routes.ts          # Rutas de productos (/api/products)
+│   ├── auth.routes.js              # Rutas de autenticación (/auth)
+│   └── products.routes.js          # Rutas de productos (/api/products)
 │
 ├── 📂 services/                    # Lógica de negocio
-│   ├── auth.service.ts             # Validaciones, Firebase lookup, bcrypt y JWT
-│   └── products.service.ts         # Validaciones y reglas de productos
+│   ├── auth.service.js             # Validaciones, Firebase lookup, bcrypt y JWT
+│   └── products.service.js         # Validaciones y reglas de productos
 │
 ├── 📂 src/                         # Frontend (Consola de gestión y explorador API)
 │   ├── components/
@@ -119,7 +119,7 @@ proyecto-node-final/
 ├── 📄 firestore.rules              # Reglas de seguridad desplegadas en Firestore
 ├── 📄 .env.example                 # Plantilla de variables de entorno
 ├── 📄 .gitignore                   # Archivos ignorados por Git
-├── 📄 server.ts                    # Punto de entrada del servidor Express
+├── 📄 index.js                     # Punto de entrada del servidor Express
 ├── 📄 package.json                 # Dependencias y scripts
 └── 📄 README.md                    # Documentación del proyecto
 ```
@@ -399,7 +399,7 @@ Content-Type: application/json
 ```
 
 #### DELETE /api/products/:id
-Eliminar un producto (requiere autenticación y rol `admin`).
+Eliminar un producto (requiere autenticación).
 
 **Headers:**
 ```
@@ -446,8 +446,8 @@ Authorization: Bearer {tu_token_jwt}
 
 ### Roles y Usuarios de Prueba Precargados
 
-- **admin** (`admin@talentotech.com` / `admin123`): Acceso completo a todas las operaciones, incluida la eliminación de productos.
-- **user** (`usuario@talentotech.com` / `user123`): Puede crear y actualizar productos, pero recibe `403 Forbidden` al intentar eliminar.
+- **admin** (`admin@talentotech.com` / `admin123`): Acceso completo a todas las operaciones.
+- **user** (`usuario@talentotech.com` / `user123`): Usuario estándar autenticado que puede crear, actualizar y eliminar productos.
 
 ## Códigos de Estado HTTP
 
@@ -524,10 +524,10 @@ console.log(product);
 
 En el archivo `package.json` están definidos los siguientes scripts:
 
-- `npm run dev`: Inicia el servidor Express + Vite en modo desarrollo con `tsx`
+- `npm run dev`: Inicia el servidor Express + Vite en modo desarrollo con `node index.js`
 - `npm run build`: Compila el frontend de consola en `dist/`
-- `npm run start`: Ejecuta `node server.ts` en modo producción
-- `npm run lint`: Verifica tipos con `tsc --noEmit`
+- `npm run start`: Ejecuta `node index.js` en modo producción
+- `npm run lint`: Verifica tipos del frontend con `tsc --noEmit`
 
 ## Seguridad
 

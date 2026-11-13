@@ -1,25 +1,8 @@
-import type { NextFunction, Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
-import { envConfig } from '../config/env.config.ts';
-import type { UserRole } from '../models/user.model.ts';
-
-export interface AuthTokenPayload {
-  userId: string;
-  email: string;
-  role: UserRole;
-  iat?: number;
-  exp?: number;
-}
-
-export interface AuthenticatedRequest extends Request {
-  user?: AuthTokenPayload;
-}
+import { envConfig } from '../config/env.config.js';
 
 export class AppError extends Error {
-  statusCode: number;
-  errors?: string[];
-
-  constructor(message: string, statusCode = 500, errors?: string[]) {
+  constructor(message, statusCode = 500, errors) {
     super(message);
     this.name = 'AppError';
     this.statusCode = statusCode;
@@ -27,7 +10,7 @@ export class AppError extends Error {
   }
 }
 
-export function extractBearerToken(req: Request): string | null {
+export function extractBearerToken(req) {
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return null;
@@ -36,11 +19,7 @@ export function extractBearerToken(req: Request): string | null {
   return token.length > 0 ? token : null;
 }
 
-export function authenticateToken(
-  req: AuthenticatedRequest,
-  _res: Response,
-  next: NextFunction
-): void {
+export function authenticateToken(req, _res, next) {
   const token = extractBearerToken(req);
 
   if (!token) {
@@ -49,7 +28,7 @@ export function authenticateToken(
   }
 
   try {
-    const decoded = jwt.verify(token, envConfig.jwtSecret) as AuthTokenPayload;
+    const decoded = jwt.verify(token, envConfig.jwtSecret);
     req.user = {
       userId: decoded.userId,
       email: decoded.email,
@@ -67,8 +46,8 @@ export function authenticateToken(
   }
 }
 
-export function requireRole(...allowedRoles: UserRole[]) {
-  return (req: AuthenticatedRequest, _res: Response, next: NextFunction): void => {
+export function requireRole(...allowedRoles) {
+  return (req, _res, next) => {
     if (!req.user) {
       next(new AppError('Autenticación requerida', 401));
       return;
@@ -88,12 +67,7 @@ export function requireRole(...allowedRoles: UserRole[]) {
   };
 }
 
-export function errorHandler(
-  err: unknown,
-  _req: Request,
-  res: Response,
-  _next: NextFunction
-): void {
+export function errorHandler(err, _req, res, _next) {
   if (err instanceof AppError) {
     res.status(err.statusCode).json({
       success: false,

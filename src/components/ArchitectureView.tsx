@@ -2,35 +2,35 @@ const LAYERS = [
   {
     step: '01. Routes',
     folder: 'routes/',
-    files: 'auth.routes.ts · products.routes.ts',
+    files: 'auth.routes.js · products.routes.js',
     responsibility:
       'Define los endpoints HTTP, aplica middlewares de autenticación JWT y valida roles antes de delegar al controlador.',
   },
   {
     step: '02. Middlewares',
     folder: 'middlewares/',
-    files: 'auth.middleware.ts',
+    files: 'auth.middleware.js',
     responsibility:
       'Verifica Bearer tokens con jsonwebtoken, restringe operaciones por rol (requireRole) y centraliza errores HTTP (400, 401, 403, 404, 500).',
   },
   {
     step: '03. Controllers',
     folder: 'controllers/',
-    files: 'auth.controller.ts · products.controller.ts',
+    files: 'auth.controller.js · products.controller.js',
     responsibility:
       'Extrae parámetros, headers (Authorization y X-Firebase-Token) y body JSON; invoca los servicios y formatea respuestas estándar.',
   },
   {
     step: '04. Services',
     folder: 'services/',
-    files: 'auth.service.ts · products.service.ts',
+    files: 'auth.service.js · products.service.js',
     responsibility:
       'Contiene la lógica de negocio: verificación con Firebase Identity Toolkit, hashing con bcryptjs, emisión de JWT y validaciones multinivel de productos.',
   },
   {
     step: '05. Models & Config',
     folder: 'models/ · config/',
-    files: 'product.model.ts · user.model.ts · firebase.config.ts',
+    files: 'product.model.js · user.model.js · firebase.config.js',
     responsibility:
       'Conecta directamente con Cloud Firestore para leer y escribir la colección products bajo las reglas de seguridad desplegadas en firestore.rules.',
   },
@@ -87,27 +87,27 @@ export function ArchitectureView() {
 
           <pre className="mt-5 overflow-x-auto rounded-lg border border-slate-200 bg-slate-950 p-4 font-mono text-xs leading-relaxed text-slate-200">
 {`├── config/
-│   ├── firebase.config.ts
-│   ├── database.config.ts
-│   └── env.config.ts
+│   ├── firebase.config.js
+│   ├── database.config.js
+│   └── env.config.js
 ├── controllers/
-│   ├── auth.controller.ts
-│   └── products.controller.ts
+│   ├── auth.controller.js
+│   └── products.controller.js
 ├── middlewares/
-│   └── auth.middleware.ts
+│   └── auth.middleware.js
 ├── models/
-│   ├── product.model.ts
-│   └── user.model.ts
+│   ├── product.model.js
+│   └── user.model.js
 ├── routes/
-│   ├── auth.routes.ts
-│   └── products.routes.ts
+│   ├── auth.routes.js
+│   └── products.routes.js
 ├── services/
-│   ├── auth.service.ts
-│   └── products.service.ts
+│   ├── auth.service.js
+│   └── products.service.js
 ├── firebase-applet-config.json
 ├── firebase-blueprint.json
 ├── firestore.rules
-└── server.ts`}
+└── index.js`}
           </pre>
         </div>
       </div>

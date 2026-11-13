@@ -2,11 +2,11 @@ import path from 'node:path';
 import bodyParser from 'body-parser';
 import cors from 'cors';
 import express from 'express';
-import { initDatabase } from './config/database.config.ts';
-import { envConfig } from './config/env.config.ts';
-import { errorHandler } from './middlewares/auth.middleware.ts';
-import authRoutes from './routes/auth.routes.ts';
-import productsRoutes from './routes/products.routes.ts';
+import { initDatabase } from './config/database.config.js';
+import { envConfig } from './config/env.config.js';
+import { errorHandler } from './middlewares/auth.middleware.js';
+import authRoutes from './routes/auth.routes.js';
+import productsRoutes from './routes/products.routes.js';
 
 async function startServer() {
   await initDatabase();

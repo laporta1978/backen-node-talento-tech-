@@ -1,35 +1,26 @@
 import crypto from 'node:crypto';
-import { readDatabase, writeDatabase, type StoredUser } from '../config/database.config.ts';
-
-export type UserRole = 'admin' | 'user';
-
-export interface CreateUserInput {
-  email: string;
-  password: string;
-  nombre: string;
-  role?: UserRole;
-}
+import { readDatabase, writeDatabase } from '../config/database.config.js';
 
 export const UserModel = {
-  async findAll(): Promise<StoredUser[]> {
+  async findAll() {
     const db = await readDatabase();
     return db.users;
   },
 
-  async findByEmail(email: string): Promise<StoredUser | undefined> {
+  async findByEmail(email) {
     const db = await readDatabase();
     const normalized = email.trim().toLowerCase();
     return db.users.find((u) => u.email.toLowerCase() === normalized);
   },
 
-  async findById(id: string): Promise<StoredUser | undefined> {
+  async findById(id) {
     const db = await readDatabase();
     return db.users.find((u) => u.id === id);
   },
 
-  async create(input: CreateUserInput): Promise<StoredUser> {
+  async create(input) {
     const now = new Date().toISOString();
-    const newUser: StoredUser = {
+    const newUser = {
       id: 'usr_' + crypto.randomBytes(6).toString('hex'),
       email: input.email.trim().toLowerCase(),
       password: input.password,

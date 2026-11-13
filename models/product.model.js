@@ -4,48 +4,15 @@ import {
   db,
   firebaseConfig,
   firestoreRestBase,
-} from '../config/firebase.config.ts';
-import { AppError } from '../middlewares/auth.middleware.ts';
+} from '../config/firebase.config.js';
+import { AppError } from '../middlewares/auth.middleware.js';
 
-export interface StoredProduct {
-  id: string;
-  nombre: string;
-  precio: number;
-  stock: number;
-  descripcion: string;
-  activo: boolean;
-  creadoPor: string;
-  creadoPorId: string;
-  actualizadoPor?: string;
-  fechaCreacion: string;
-  fechaActualizacion: string;
-}
-
-export interface CreateProductInput {
-  nombre: string;
-  precio: number;
-  stock: number;
-  descripcion: string;
-  activo: boolean;
-  creadoPor: string;
-  creadoPorId: string;
-}
-
-export interface UpdateProductInput {
-  nombre?: string;
-  precio?: number;
-  stock?: number;
-  descripcion?: string;
-  activo?: boolean;
-  actualizadoPor: string;
-}
-
-function toIsoDate(value: unknown): string {
+function toIsoDate(value) {
   if (value instanceof Timestamp) {
     return value.toDate().toISOString();
   }
-  if (value && typeof value === 'object' && 'toDate' in value && typeof (value as { toDate: () => Date }).toDate === 'function') {
-    return (value as { toDate: () => Date }).toDate().toISOString();
+  if (value && typeof value === 'object' && typeof value.toDate === 'function') {
+    return value.toDate().toISOString();
   }
   if (typeof value === 'string') {
     return value;
@@ -53,7 +20,7 @@ function toIsoDate(value: unknown): string {
   return new Date().toISOString();
 }
 
-function mapSnapshotToProduct(id: string, data: Record<string, unknown>): StoredProduct {
+function mapSnapshotToProduct(id, data) {
   return {
     id,
     nombre: String(data.nombre ?? ''),
@@ -69,23 +36,21 @@ function mapSnapshotToProduct(id: string, data: Record<string, unknown>): Stored
   };
 }
 
-function toFirestoreField(value: string | number | boolean, forceInt = false) {
+function toFirestoreField(value, forceInt = false) {
   if (typeof value === 'boolean') return { booleanValue: value };
   if (typeof value === 'number') {
-    if (forceInt || Number.isInteger(value)) {
-      return Number.isInteger(value) && forceInt
-        ? { integerValue: String(value) }
-        : { doubleValue: value };
+    if (forceInt && Number.isInteger(value)) {
+      return { integerValue: String(value) };
     }
     return { doubleValue: value };
   }
   return { stringValue: value };
 }
 
-async function handleFirestoreRestError(res: Response, fallbackMsg: string): Promise<never> {
+async function handleFirestoreRestError(res, fallbackMsg) {
   let message = fallbackMsg;
   try {
-    const errJson = (await res.json()) as { error?: { message?: string; status?: string } };
+    const errJson = await res.json();
     if (errJson?.error?.message) {
       message = errJson.error.message;
     }
@@ -112,24 +77,24 @@ const commitEndpoint = `https://firestore.googleapis.com/v1/projects/${firebaseC
 const documentPrefix = `projects/${firebaseConfig.projectId}/databases/${firebaseConfig.firestoreDatabaseId}/documents`;
 
 export const ProductModel = {
-  async findAll(): Promise<StoredProduct[]> {
+  async findAll() {
     const snapshot = await getDocs(collection(db, 'products'));
     const products = snapshot.docs.map((d) =>
-      mapSnapshotToProduct(d.id, d.data() as Record<string, unknown>)
+      mapSnapshotToProduct(d.id, d.data())
     );
     return products.sort((a, b) => b.fechaCreacion.localeCompare(a.fechaCreacion));
   },
 
-  async findById(id: string): Promise<StoredProduct | undefined> {
+  async findById(id) {
     const docRef = doc(db, 'products', id);
     const snap = await getDoc(docRef);
     if (!snap.exists()) {
       return undefined;
     }
-    return mapSnapshotToProduct(snap.id, snap.data() as Record<string, unknown>);
+    return mapSnapshotToProduct(snap.id, snap.data());
   },
 
-  async create(input: CreateProductInput, firebaseIdToken?: string): Promise<StoredProduct> {
+  async create(input, firebaseIdToken) {
     if (!firebaseIdToken) {
       throw new AppError(
         'Se requiere autenticación Firebase (Google) en el header X-Firebase-Token para escribir en Cloud Firestore.',
@@ -187,11 +152,7 @@ export const ProductModel = {
     };
   },
 
-  async update(
-    id: string,
-    input: UpdateProductInput,
-    firebaseIdToken?: string
-  ): Promise<StoredProduct | undefined> {
+  async update(id, input, firebaseIdToken) {
     if (!firebaseIdToken) {
       throw new AppError(
         'Se requiere autenticación Firebase (Google) en el header X-Firebase-Token para actualizar en Cloud Firestore.',
@@ -204,10 +165,10 @@ export const ProductModel = {
       return undefined;
     }
 
-    const fields: Record<string, unknown> = {
+    const fields = {
       actualizadoPor: toFirestoreField(input.actualizadoPor),
     };
-    const fieldPaths: string[] = ['actualizadoPor', 'fechaActualizacion'];
+    const fieldPaths = ['actualizadoPor', 'fechaActualizacion'];
 
     if (input.nombre !== undefined) {
       fields.nombre = toFirestoreField(input.nombre);
@@ -263,7 +224,7 @@ export const ProductModel = {
     return this.findById(id);
   },
 
-  async remove(id: string, firebaseIdToken?: string): Promise<StoredProduct | undefined> {
+  async remove(id, firebaseIdToken) {
     if (!firebaseIdToken) {
       throw new AppError(
         'Se requiere autenticación Firebase (Google) en el header X-Firebase-Token para eliminar en Cloud Firestore.',

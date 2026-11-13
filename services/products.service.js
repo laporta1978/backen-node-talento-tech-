@@ -1,16 +1,8 @@
-import { AppError, type AuthTokenPayload } from '../middlewares/auth.middleware.ts';
-import { ProductModel } from '../models/product.model.ts';
+import { AppError } from '../middlewares/auth.middleware.js';
+import { ProductModel } from '../models/product.model.js';
 
-export interface ProductPayload {
-  nombre?: unknown;
-  precio?: unknown;
-  stock?: unknown;
-  descripcion?: unknown;
-  activo?: unknown;
-}
-
-function validateCreatePayload(payload: ProductPayload) {
-  const errors: string[] = [];
+function validateCreatePayload(payload) {
+  const errors = [];
 
   if (typeof payload.nombre !== 'string' || payload.nombre.trim().length < 2) {
     errors.push('El nombre es obligatorio y debe tener al menos 2 caracteres');
@@ -49,7 +41,7 @@ function validateCreatePayload(payload: ProductPayload) {
   }
 
   return {
-    nombre: (payload.nombre as string).trim(),
+    nombre: payload.nombre.trim(),
     precio: Number(precio.toFixed(2)),
     stock,
     descripcion: typeof payload.descripcion === 'string' ? payload.descripcion.trim() : '',
@@ -57,15 +49,9 @@ function validateCreatePayload(payload: ProductPayload) {
   };
 }
 
-function validateUpdatePayload(payload: ProductPayload) {
-  const errors: string[] = [];
-  const updateFields: {
-    nombre?: string;
-    precio?: number;
-    stock?: number;
-    descripcion?: string;
-    activo?: boolean;
-  } = {};
+function validateUpdatePayload(payload) {
+  const errors = [];
+  const updateFields = {};
 
   if (payload.nombre !== undefined) {
     if (typeof payload.nombre !== 'string' || payload.nombre.trim().length < 2) {
@@ -125,7 +111,7 @@ function validateUpdatePayload(payload: ProductPayload) {
 }
 
 export const ProductsService = {
-  async getAllProducts(search?: string, onlyActive?: boolean) {
+  async getAllProducts(search, onlyActive) {
     let products = await ProductModel.findAll();
 
     if (onlyActive) {
@@ -145,7 +131,7 @@ export const ProductsService = {
     return products;
   },
 
-  async getProductById(id: string) {
+  async getProductById(id) {
     if (!id || !id.trim() || !/^[a-zA-Z0-9_\-]+$/.test(id.trim())) {
       throw new AppError('ID de producto inválido', 400);
     }
@@ -156,11 +142,7 @@ export const ProductsService = {
     return product;
   },
 
-  async createProduct(
-    payload: ProductPayload,
-    user: AuthTokenPayload,
-    firebaseIdToken?: string
-  ) {
+  async createProduct(payload, user, firebaseIdToken) {
     const validated = validateCreatePayload(payload);
     const displayCreator = user.email.split('@')[0].slice(0, 120) || 'Operador';
     return ProductModel.create(
@@ -173,12 +155,7 @@ export const ProductsService = {
     );
   },
 
-  async updateProduct(
-    id: string,
-    payload: ProductPayload,
-    user: AuthTokenPayload,
-    firebaseIdToken?: string
-  ) {
+  async updateProduct(id, payload, user, firebaseIdToken) {
     if (!id || !id.trim() || !/^[a-zA-Z0-9_\-]+$/.test(id.trim())) {
       throw new AppError('ID de producto inválido', 400);
     }
@@ -201,11 +178,7 @@ export const ProductsService = {
     return updated;
   },
 
-  async deleteProduct(
-    id: string,
-    user: AuthTokenPayload,
-    firebaseIdToken?: string
-  ) {
+  async deleteProduct(id, user, firebaseIdToken) {
     if (!id || !id.trim() || !/^[a-zA-Z0-9_\-]+$/.test(id.trim())) {
       throw new AppError('ID de producto inválido', 400);
     }

@@ -1,12 +1,8 @@
-import type { NextFunction, Request, Response } from 'express';
-import {
-  extractBearerToken,
-  type AuthenticatedRequest,
-} from '../middlewares/auth.middleware.ts';
-import { AuthService } from '../services/auth.service.ts';
+import { extractBearerToken } from '../middlewares/auth.middleware.js';
+import { AuthService } from '../services/auth.service.js';
 
 export const AuthController = {
-  async login(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async login(req, res, next) {
     try {
       const data = await AuthService.login(req.body ?? {});
       res.status(200).json({
@@ -19,7 +15,7 @@ export const AuthController = {
     }
   },
 
-  async firebaseLogin(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async firebaseLogin(req, res, next) {
     try {
       const idToken = req.body?.idToken ?? req.headers['x-firebase-token'];
       const data = await AuthService.loginWithFirebase(idToken);
@@ -33,7 +29,7 @@ export const AuthController = {
     }
   },
 
-  async register(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async register(req, res, next) {
     try {
       const data = await AuthService.register(req.body ?? {});
       res.status(201).json({
@@ -46,7 +42,7 @@ export const AuthController = {
     }
   },
 
-  verify(req: AuthenticatedRequest, res: Response): void {
+  verify(req, res) {
     res.status(200).json({
       success: true,
       message: 'Token válido',
@@ -60,7 +56,7 @@ export const AuthController = {
     });
   },
 
-  async refresh(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async refresh(req, res, next) {
     try {
       const token = extractBearerToken(req);
       const data = await AuthService.refresh(token);
@@ -74,7 +70,7 @@ export const AuthController = {
     }
   },
 
-  async me(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
+  async me(req, res, next) {
     try {
       const userId = req.user?.userId || '';
       const data = await AuthService.getMe(userId, req.user?.email, req.user?.role);

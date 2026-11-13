@@ -1,8 +1,7 @@
-import type { NextFunction, Request, Response } from 'express';
-import { AppError, type AuthenticatedRequest } from '../middlewares/auth.middleware.ts';
-import { ProductsService } from '../services/products.service.ts';
+import { AppError } from '../middlewares/auth.middleware.js';
+import { ProductsService } from '../services/products.service.js';
 
-function extractFirebaseToken(req: Request): string | undefined {
+function extractFirebaseToken(req) {
   const header = req.headers['x-firebase-token'];
   if (typeof header === 'string' && header.trim()) {
     return header.trim();
@@ -11,7 +10,7 @@ function extractFirebaseToken(req: Request): string | undefined {
 }
 
 export const ProductsController = {
-  async getAll(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async getAll(req, res, next) {
     try {
       const search = typeof req.query.search === 'string' ? req.query.search : undefined;
       const onlyActive = req.query.activo === 'true';
@@ -28,7 +27,7 @@ export const ProductsController = {
     }
   },
 
-  async getById(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async getById(req, res, next) {
     try {
       const id = String(req.params.id ?? '');
       const data = await ProductsService.getProductById(id);
@@ -43,7 +42,7 @@ export const ProductsController = {
     }
   },
 
-  async create(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
+  async create(req, res, next) {
     try {
       if (!req.user) {
         throw new AppError('Autenticación requerida', 401);
@@ -61,7 +60,7 @@ export const ProductsController = {
     }
   },
 
-  async update(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
+  async update(req, res, next) {
     try {
       if (!req.user) {
         throw new AppError('Autenticación requerida', 401);
@@ -80,7 +79,7 @@ export const ProductsController = {
     }
   },
 
-  async remove(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
+  async remove(req, res, next) {
     try {
       if (!req.user) {
         throw new AppError('Autenticación requerida', 401);

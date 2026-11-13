@@ -1,30 +1,19 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { envConfig } from '../config/env.config.ts';
-import { firebaseConfig } from '../config/firebase.config.ts';
-import { AppError, type AuthTokenPayload } from '../middlewares/auth.middleware.ts';
-import { UserModel } from '../models/user.model.ts';
+import { envConfig } from '../config/env.config.js';
+import { firebaseConfig } from '../config/firebase.config.js';
+import { AppError } from '../middlewares/auth.middleware.js';
+import { UserModel } from '../models/user.model.js';
 
-export interface LoginPayload {
-  email?: unknown;
-  password?: unknown;
-}
-
-export interface RegisterPayload {
-  email?: unknown;
-  password?: unknown;
-  nombre?: unknown;
-}
-
-function signAccessToken(payload: Omit<AuthTokenPayload, 'iat' | 'exp'>): string {
+function signAccessToken(payload) {
   return jwt.sign(payload, envConfig.jwtSecret, {
     expiresIn: envConfig.jwtExpiresIn,
   });
 }
 
 export const AuthService = {
-  async login(payload: LoginPayload) {
-    const errors: string[] = [];
+  async login(payload) {
+    const errors = [];
 
     if (typeof payload.email !== 'string' || !payload.email.trim()) {
       errors.push('El email es obligatorio');
@@ -37,8 +26,8 @@ export const AuthService = {
       throw new AppError('Datos de entrada inválidos', 400, errors);
     }
 
-    const email = (payload.email as string).trim().toLowerCase();
-    const password = payload.password as string;
+    const email = payload.email.trim().toLowerCase();
+    const password = payload.password;
 
     const user = await UserModel.findByEmail(email);
     if (!user) {
@@ -73,7 +62,7 @@ export const AuthService = {
     };
   },
 
-  async loginWithFirebase(idToken: unknown) {
+  async loginWithFirebase(idToken) {
     if (typeof idToken !== 'string' || !idToken.trim()) {
       throw new AppError('El token de Firebase (idToken) es obligatorio', 400);
     }
@@ -91,15 +80,7 @@ export const AuthService = {
       throw new AppError('Token de Firebase inválido o expirado', 401);
     }
 
-    const lookupData = (await lookupRes.json()) as {
-      users?: Array<{
-        localId: string;
-        email?: string;
-        emailVerified?: boolean;
-        displayName?: string;
-      }>;
-    };
-
+    const lookupData = await lookupRes.json();
     const fbUser = lookupData.users?.[0];
     if (!fbUser || !fbUser.email) {
       throw new AppError('No se pudo verificar el usuario de Firebase', 401);
@@ -132,8 +113,8 @@ export const AuthService = {
     };
   },
 
-  async register(payload: RegisterPayload) {
-    const errors: string[] = [];
+  async register(payload) {
+    const errors = [];
 
     if (typeof payload.email !== 'string' || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(payload.email.trim())) {
       errors.push('Debe ingresar un email válido');
@@ -149,17 +130,17 @@ export const AuthService = {
       throw new AppError('Datos de registro inválidos', 400, errors);
     }
 
-    const email = (payload.email as string).trim().toLowerCase();
+    const email = payload.email.trim().toLowerCase();
     const existing = await UserModel.findByEmail(email);
     if (existing) {
       throw new AppError('Ya existe una cuenta registrada con ese email', 400);
     }
 
-    const passwordHash = await bcrypt.hash(payload.password as string, 10);
+    const passwordHash = await bcrypt.hash(payload.password, 10);
     const createdUser = await UserModel.create({
       email,
       password: passwordHash,
-      nombre: (payload.nombre as string).trim(),
+      nombre: payload.nombre.trim(),
       role: 'user',
     });
 
@@ -182,14 +163,14 @@ export const AuthService = {
     };
   },
 
-  async refresh(token: string | null) {
+  async refresh(token) {
     if (!token) {
       throw new AppError('Token no proporcionado. Usa el formato: Bearer {token}', 401);
     }
 
-    let decoded: AuthTokenPayload;
+    let decoded;
     try {
-      decoded = jwt.verify(token, envConfig.jwtSecret) as AuthTokenPayload;
+      decoded = jwt.verify(token, envConfig.jwtSecret);
     } catch (error) {
       if (error instanceof jwt.TokenExpiredError) {
         throw new AppError('El token ha expirado y no puede refrescarse', 401);
@@ -213,7 +194,7 @@ export const AuthService = {
     };
   },
 
-  async getMe(userId: string, fallbackEmail?: string, fallbackRole?: 'admin' | 'user') {
+  async getMe(userId, fallbackEmail, fallbackRole) {
     const user = await UserModel.findById(userId);
     if (!user) {
       if (fallbackEmail) {
