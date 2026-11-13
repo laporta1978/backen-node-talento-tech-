@@ -539,6 +539,6 @@ Este proyecto por talento tech gaston la porta  2026
 ---
 
 **Versión:** 2.1.0  
-**Última actualización:** Noviembre 2025  
+**Última actualización:** Noviembre 2026  
 **Autor:** Gaston La Porta / Estudiante Talento Tech
 

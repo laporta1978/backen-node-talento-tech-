@@ -448,16 +448,21 @@ export default function App() {
     <div className="min-h-screen bg-slate-50 text-slate-900">
       <header className="border-b border-slate-200 bg-white">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-8 px-6 py-4">
-          <a
-            href="#top"
-            onClick={(e) => {
-              e.preventDefault();
-              setActiveTab('catalog');
-            }}
-            className="whitespace-nowrap shrink-0 text-lg font-bold tracking-tight text-slate-900"
-          >
-            Talento Tech API
-          </a>
+          <div className="shrink-0">
+            <a
+              href="#top"
+              onClick={(e) => {
+                e.preventDefault();
+                setActiveTab('catalog');
+              }}
+              className="block whitespace-nowrap text-lg font-bold tracking-tight text-slate-900"
+            >
+              Talento Tech Backend 2026
+            </a>
+            <p className="mt-0.5 whitespace-nowrap text-xs text-slate-500">
+              Estudiante : Gaston La Porta
+            </p>
+          </div>
 
           <nav className="hidden items-center gap-6 text-sm font-medium text-slate-600 md:flex">
             <button
